@@ -4,15 +4,46 @@ const bodyParser = require('body-parser');
 const app = express();
 const PORT = 3000;
 
-// Middleware
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Middleware - increase limit for image data
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static('public'));
 
 // In-memory data store for students
-let students = [];
+let students = [
+  {
+    id: 1,
+    name: 'Ava Thompson',
+    branch: 'CSE',
+    year: '2',
+    email: 'ava.thompson@college.edu',
+    phone: '+1 555 101 2020',
+    studentId: 'CSE-2026-001',
+    status: 'active'
+  },
+  {
+    id: 2,
+    name: 'Noah Patel',
+    branch: 'ECE',
+    year: '3',
+    email: 'noah.patel@college.edu',
+    phone: '+1 555 303 4040',
+    studentId: 'ECE-2026-014',
+    status: 'active'
+  },
+  {
+    id: 3,
+    name: 'Mia Rodriguez',
+    branch: 'IT',
+    year: '1',
+    email: 'mia.rodriguez@college.edu',
+    phone: '+1 555 505 6060',
+    studentId: 'IT-2026-009',
+    status: 'inactive'
+  }
+];
 
-let nextId = 1;
+let nextId = 4;
 
 // GET /students - Get all students
 app.get('/students', (req, res) => {
@@ -42,7 +73,7 @@ app.get('/students/:id', (req, res) => {
 
 // POST /students - Add a new student
 app.post('/students', (req, res) => {
-  const { name, branch, year } = req.body;
+  const { name, branch, year, email, phone, studentId, status } = req.body;
   
   // Validation
   if (!name || !branch || !year) {
@@ -56,7 +87,11 @@ app.post('/students', (req, res) => {
     id: nextId++,
     name,
     branch,
-    year
+    year,
+    email: email || '',
+    phone: phone || '',
+    studentId: studentId || '',
+    status: status || 'active'
   };
   
   students.push(newStudent);
@@ -83,7 +118,37 @@ app.patch('/students/:id', (req, res) => {
   if (req.body.name) student.name = req.body.name;
   if (req.body.branch) student.branch = req.body.branch;
   if (req.body.year) student.year = req.body.year;
+  if (req.body.email !== undefined) student.email = req.body.email;
+  if (req.body.phone !== undefined) student.phone = req.body.phone;
+  if (req.body.studentId !== undefined) student.studentId = req.body.studentId;
+  if (req.body.status !== undefined) student.status = req.body.status;
   
+  res.json({
+    success: true,
+    message: 'Student updated successfully',
+    data: student
+  });
+});
+
+// PUT /students/:id - Full/partial update (alias to patch behavior)
+app.put('/students/:id', (req, res) => {
+  const student = students.find(s => s.id === parseInt(req.params.id));
+
+  if (!student) {
+    return res.status(404).json({
+      success: false,
+      message: 'Student not found'
+    });
+  }
+
+  if (req.body.name !== undefined) student.name = req.body.name;
+  if (req.body.branch !== undefined) student.branch = req.body.branch;
+  if (req.body.year !== undefined) student.year = req.body.year;
+  if (req.body.email !== undefined) student.email = req.body.email;
+  if (req.body.phone !== undefined) student.phone = req.body.phone;
+  if (req.body.studentId !== undefined) student.studentId = req.body.studentId;
+  if (req.body.status !== undefined) student.status = req.body.status;
+
   res.json({
     success: true,
     message: 'Student updated successfully',
